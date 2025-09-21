@@ -1,6 +1,7 @@
 // src/pages/Home.jsx
 import { useState, useRef } from "react";
 import { useFaviconMarquee } from "../hooks/useFaviconMarquee";
+import { usePageMeta } from "../hooks/usePageMeta";
 
 const serviceImgs = [
   "https://images.unsplash.com/photo-1598970434795-0c54fe7c0642?q=80&w=1200&auto=format&fit=crop",
@@ -18,7 +19,11 @@ const galleryImgs = [
 
 export default function Home() {
   useFaviconMarquee({ bg: "#05270a", text: "LS", fps: 60 });
-
+  usePageMeta({
+    title: "LawnSolutions",
+    description:
+      "DFW landscaping & lawn care. Free quotes, licensed & insured. We design, build, and maintain outdoor spaces you’ll love.",
+  });
   return (
     <>
       <Hero />

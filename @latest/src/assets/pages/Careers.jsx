@@ -1,10 +1,9 @@
 // src/pages/Careers.jsx
 import { useRef, useState, useEffect } from "react";
-
+import { usePageMeta } from "../hooks/usePageMeta";
 
 export default function Careers() {
-
-    useEffect(() => {
+  useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, []);
   const jobs = [
@@ -36,17 +35,33 @@ export default function Careers() {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  usePageMeta({
+    title: "LawnSolutions",
+    description:
+      "Join a tight-knit crew building beautiful outdoor spaces. See open roles, benefits, and apply today.",
+  });
+
   return (
     <main className="min-h-screen bg-white">
       {/* Page hero */}
       <section className="relative border-b">
         <div className="max-w-7xl mx-auto px-4 py-16">
-          <h1 className="text-4xl md:text-5xl font-extrabold">Careers at LawnSolutions</h1>
+          <h1 className="text-4xl md:text-5xl font-extrabold">
+            Careers at LawnSolutions
+          </h1>
           <p className="mt-3 text-lg text-gray-600 max-w-2xl">
-            Join a tight-knit, fast-moving team building outdoor spaces people love. Competitive pay, clear growth paths, and respectful culture.
+            Join a tight-knit, fast-moving team building outdoor spaces people
+            love. Competitive pay, clear growth paths, and respectful culture.
           </p>
           <div className="mt-6">
-            <a href="#apply" onClick={(e) => { e.preventDefault(); jumpToApply(selectedRole); }} className="px-6 py-3 rounded-xl bg-[#05270a] text-white hover:bg-[#05270a]/90 shadow">
+            <a
+              href="#apply"
+              onClick={(e) => {
+                e.preventDefault();
+                jumpToApply(selectedRole);
+              }}
+              className="px-6 py-3 rounded-xl bg-[#05270a] text-white hover:bg-[#05270a]/90 shadow"
+            >
               Apply Now
             </a>
           </div>
@@ -65,16 +80,24 @@ export default function Careers() {
           <h2 className="text-2xl md:text-3xl font-bold">Open Roles</h2>
           <div className="mt-8 grid gap-6 md:grid-cols-3">
             {jobs.map((job) => (
-              <article key={job.title} className="border rounded-2xl p-6 shadow-sm bg-gray-50 hover:shadow-md">
+              <article
+                key={job.title}
+                className="border rounded-2xl p-6 shadow-sm bg-gray-50 hover:shadow-md"
+              >
                 <h3 className="text-xl font-semibold">{job.title}</h3>
                 <p className="text-sm text-gray-500">{job.type}</p>
                 <p className="mt-3 text-sm text-gray-600">{job.desc}</p>
                 <ul className="mt-3 text-sm text-gray-600 list-disc pl-5 space-y-1">
-                  {job.perks.map((p) => <li key={p}>{p}</li>)}
+                  {job.perks.map((p) => (
+                    <li key={p}>{p}</li>
+                  ))}
                 </ul>
                 <a
                   href="#apply"
-                  onClick={(e) => { e.preventDefault(); jumpToApply(job.title); }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    jumpToApply(job.title);
+                  }}
                   className="inline-block mt-4 text-sm font-medium text-[#05270a] hover:text-[#05270a]"
                 >
                   Apply for this role →
@@ -97,6 +120,63 @@ function ApplicationForm({ selectedRole }) {
   const [status, setStatus] = useState({ state: "idle", msg: "" });
   const formRef = useRef(null);
   const fileRef = useRef(null);
+  const [fileName, setFileName] = useState("");
+  const MAX_BYTES = 3 * 1024 * 1024; // 3MB
+  const [fileError, setFileError] = useState("");
+  const [fileByteSize, setFileByteSize] = useState(0);
+  function formatBytes(n) {
+    if (!n && n !== 0) return "";
+    const mb = n / (1024 * 1024);
+    return `${mb.toFixed(mb < 0.1 ? 2 : 1)} MB`;
+  }
+  function onFileChange(e) {
+    const f = e.target.files?.[0];
+    if (!f) {
+      setFileName("");
+      setFileByteSize(0);
+      setFileError("");
+      return;
+    }
+    setFileName(f.name);
+    setFileByteSize(f.size);
+
+    if (f.type !== "application/pdf") {
+      setFileError("Please upload a PDF file.");
+    } else if (f.size > MAX_BYTES) {
+      setFileError(
+        `File is too large (${formatBytes(f.size)}). Max ${formatBytes(
+          MAX_BYTES
+        )}.`
+      );
+    } else {
+      setFileError("");
+    }
+  }
+  function clearFile() {
+    const input = fileRef.current;
+    if (!input) return;
+
+    // Try the normal way
+    input.value = "";
+
+    // If any browsers hang on to the file, hard-reset by toggling type
+    try {
+      input.type = "text";
+      input.type = "file";
+    } catch (_) {
+      // Fallback: reset via a temporary form wrapper
+      const form = document.createElement("form");
+      const parent = input.parentNode;
+      const next = input.nextSibling;
+      form.appendChild(input);
+      form.reset();
+      parent.insertBefore(input, next);
+    }
+
+    setFileName("");
+    setFileByteSize(0);
+    setFileError("");
+  }
 
   function appendTimestamps(fd) {
     const now = new Date();
@@ -124,6 +204,23 @@ function ApplicationForm({ selectedRole }) {
     try {
       setStatus({ state: "loading", msg: "Submitting..." });
       const formData = new FormData(formRef.current);
+      const f = fileRef.current?.files?.[0];
+      if (f) {
+        if (f.type !== "application/pdf") {
+          setStatus({ state: "error", msg: "Please upload a PDF file." });
+          return;
+        }
+        if (f.size > MAX_BYTES) {
+          setStatus({
+            state: "error",
+            msg: `File too large (${formatBytes(f.size)}). Max ${formatBytes(
+              MAX_BYTES
+            )}.`,
+          });
+          return;
+        }
+      }
+
       if (formData.get("_gotcha")) return; // honeypot
 
       // Email formatting/meta
@@ -140,7 +237,10 @@ function ApplicationForm({ selectedRole }) {
       });
 
       if (res.ok) {
-        setStatus({ state: "success", msg: "Thanks for applying! We’ll be in touch." });
+        setStatus({
+          state: "success",
+          msg: "Thanks for applying! We’ll be in touch.",
+        });
         formRef.current.reset();
         if (fileRef.current) fileRef.current.value = null;
       } else {
@@ -148,7 +248,10 @@ function ApplicationForm({ selectedRole }) {
         throw new Error(data?.message || "Submission failed");
       }
     } catch (err) {
-      setStatus({ state: "error", msg: err.message || "Something went wrong." });
+      setStatus({
+        state: "error",
+        msg: err.message || "Something went wrong.",
+      });
     }
   }
 
@@ -174,45 +277,163 @@ function ApplicationForm({ selectedRole }) {
           </div>
         )}
 
-        <form ref={formRef} onSubmit={onSubmit} className="mt-8 grid gap-4 md:grid-cols-2" noValidate>
+        <form
+          ref={formRef}
+          onSubmit={onSubmit}
+          className="mt-8 grid gap-4 md:grid-cols-2"
+          noValidate
+        >
           {/* Honeypot (bots fill it, humans don't) */}
-          <input type="text" name="_gotcha" className="hidden" tabIndex={-1} autoComplete="off" />
+          <input
+            type="text"
+            name="_gotcha"
+            className="hidden"
+            tabIndex={-1}
+            autoComplete="off"
+          />
 
           <div className="grid gap-2">
             <label className="text-sm">Full Name</label>
-            <input name="name" required className="border rounded-xl px-4 py-3" placeholder="Jane Doe" />
+            <input
+              name="name"
+              required
+              className="border rounded-xl px-4 py-3"
+              placeholder="Jane Doe"
+            />
           </div>
           <div className="grid gap-2">
             <label className="text-sm">Email</label>
-            <input name="email" type="email" required className="border rounded-xl px-4 py-3" placeholder="jane@example.com" />
+            <input
+              name="email"
+              type="email"
+              required
+              className="border rounded-xl px-4 py-3"
+              placeholder="jane@example.com"
+            />
           </div>
           <div className="grid gap-2">
             <label className="text-sm">Phone</label>
-            <input name="phone" className="border rounded-xl px-4 py-3" placeholder="(555) 123-4567" />
+            <input
+              name="phone"
+              className="border rounded-xl px-4 py-3"
+              placeholder="(555) 123-4567"
+            />
           </div>
           <div className="grid gap-2">
             <label className="text-sm">Position</label>
-            <select name="position" defaultValue={selectedRole} className="border rounded-xl px-4 py-3">
+            <select
+              name="position"
+              defaultValue={selectedRole}
+              className="border rounded-xl px-4 py-3"
+            >
               <option>Landscape Crew Member</option>
               <option>Crew Lead / Foreman</option>
               <option>Seasonal Helper</option>
             </select>
           </div>
           <div className="grid gap-2 md:col-span-2">
-            <label className="text-sm">Resume (PDF)</label>
-            <input ref={fileRef} name="resume" type="file" accept=".pdf" className="border rounded-xl px-4 py-3 bg-white" />
+            <label htmlFor="resume" className="text-sm">
+              Resume (PDF)
+            </label>
+
+            <input
+              ref={fileRef}
+              id="resume"
+              name="resume"
+              type="file"
+              accept=".pdf,application/pdf"
+              className="sr-only"
+              onChange={onFileChange}
+            />
+
+            <div className="flex items-center gap-3 rounded-xl px-4 py-3 bg-white border">
+              {/* File icon */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-5 h-5 text-[#05270a] shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                <path d="M14 3v6h6" />
+                <path d="M12 17v-6" />
+                <path d="M9.5 12.5 12 10l2.5 2.5" />
+              </svg>
+
+              {/* Filename + size */}
+              <span className="text-sm text-gray-700 truncate flex-1">
+                {fileName
+                  ? `${fileName} ${
+                    fileByteSize ? `— ${formatBytes(fileByteSize)}` : ""
+                    }`
+                  : "Choose a PDF (max 3MB)"}
+              </span>
+
+              {/* Browse */}
+              <label
+                htmlFor="resume"
+                className="inline-flex items-center px-3 py-1 rounded-lg bg-[#05270a] text-white text-xs cursor-pointer hover:bg-[#05270a]/90"
+              >
+                Browse
+              </label>
+
+              {/* Clear (X) */}
+              <button
+                type="button"
+                onClick={clearFile}
+                disabled={!fileName}
+                aria-label="Remove selected file"
+                title="Clear file"
+                className="ml-1 inline-flex items-center justify-center w-7 h-7 rounded-md
+                 text-red-600 hover:text-red-700
+                 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Inline error */}
+            {fileError && <p className="text-xs text-red-600">{fileError}</p>}
+            {!fileError && fileName && (
+              <p className="text-xs text-gray-500">
+                Looks good. PDF under {formatBytes(MAX_BYTES)}.
+              </p>
+            )}
           </div>
+
           <div className="grid gap-2 md:col-span-2">
             <label className="text-sm">Tell us about your experience</label>
-            <textarea name="experience" className="border rounded-xl px-4 py-3 min-h-32" placeholder="Brief summary of relevant work..." />
+            <textarea
+              name="experience"
+              className="border rounded-xl px-4 py-3 min-h-32"
+              placeholder="Brief summary of relevant work..."
+            />
           </div>
 
           <button
             type="submit"
-            disabled={status.state === "loading"}
-            className="md:col-span-2 px-6 py-3 rounded-xl bg-[#05270a] text-white font-semibold hover:bg-[#05270a]/90 disabled:opacity-60"
+            disabled={status.state === "loading" || !!fileError}
+            className="md:col-span-2 px-6 py-3 rounded-xl bg-[#05270a] text-white font-semibold
+             hover:bg-[#05270a]/90 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {status.state === "loading" ? "Submitting..." : "Submit Application"}
+            {status.state === "loading"
+              ? "Submitting..."
+              : "Submit Application"}
           </button>
         </form>
       </div>
@@ -220,17 +441,21 @@ function ApplicationForm({ selectedRole }) {
   );
 }
 
-
-
 /* ------------------------- Video Section component ------------------------ */
-function VideoSection({ title = "Our work in action", youtubeUrl, srcMp4, poster }) {
+function VideoSection({
+  title = "Our work in action",
+  youtubeUrl,
+  srcMp4,
+  poster,
+}) {
   const isEmbed = Boolean(youtubeUrl);
 
   return (
     <section id="video" className="pt-6 pb-16 bg-gray-50 border-t">
       <div className="max-w-7xl mx-auto px-4">
         <p className="mt-2 text-gray-600 max-w-2xl">
-          Get a feel for our team, projects, and the kind of transformations we build every week.
+          Get a feel for our team, projects, and the kind of transformations we
+          build every week.
         </p>
 
         <div className="mt-6 rounded-2xl overflow-hidden shadow border bg-black">
@@ -246,7 +471,12 @@ function VideoSection({ title = "Our work in action", youtubeUrl, srcMp4, poster
               />
             </div>
           ) : (
-            <video className="w-full h-auto" controls playsInline poster={poster}>
+            <video
+              className="w-full h-auto"
+              controls
+              playsInline
+              poster={poster}
+            >
               <source src={srcMp4} type="video/mp4" />
               Your browser does not support the video tag.
             </video>
