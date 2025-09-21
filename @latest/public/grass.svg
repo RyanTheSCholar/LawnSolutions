@@ -1,0 +1,18 @@
+<!-- Lawn Mower Icon (Filled Deck, outline details) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"
+     fill="currentColor" stroke="currentColor" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round"
+     aria-hidden="true" width="64" height="64">
+  <!-- Handle -->
+  <path d="M19 11 L36 28" fill="none"/>
+  <path d="M14 14 L19 11" fill="none"/>
+  <!-- Deck (filled) -->
+  <path d="M10 42 h30 a6 6 0 0 1 6 6 v2 H10 Z" />
+  <!-- Engine housing (knock out) -->
+  <rect x="26" y="30" width="14" height="10" rx="2" fill="white"/>
+  <path d="M28 30 v-3 h6 a2 2 0 0 1 2 2 v1" fill="none"/>
+  <!-- Wheels (stroked rings) -->
+  <circle cx="18" cy="50" r="6" fill="white"/>
+  <circle cx="44" cy="50" r="6" fill="white"/>
+  <path d="M14 50 h8 M40 50 h8" fill="none"/>
+</svg>

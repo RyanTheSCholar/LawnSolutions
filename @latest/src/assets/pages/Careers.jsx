@@ -1,7 +1,12 @@
 // src/pages/Careers.jsx
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+
 
 export default function Careers() {
+
+    useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, []);
   const jobs = [
     {
       title: "Landscape Crew Member",

@@ -1,8 +1,9 @@
 // src/pages/Home.jsx
 import { useState, useRef } from "react";
+import { useTitleTickerUltra } from "../hooks/useTitleTicker";
+import { useFaviconMarquee } from "../hooks/useFaviconMarquee";
+import { use } from "react";
 
-const heroImg =
-  "https://images.unsplash.com/photo-1556228724-4c1fea0b43c9?q=80&w=1600&auto=format&fit=crop";
 const serviceImgs = [
   "https://images.unsplash.com/photo-1598970434795-0c54fe7c0642?q=80&w=1200&auto=format&fit=crop",
   "https://images.unsplash.com/photo-1599599810769-9b7b1ea16035?q=80&w=1200&auto=format&fit=crop",
@@ -18,6 +19,18 @@ const galleryImgs = [
 ];
 
 export default function Home() {
+  useFaviconMarquee({ bg: "#05270a", text: "LS", fps: 60 });
+  useTitleTickerUltra({
+    texts: [
+      "Lawn Solutions — Free Quote Today",
+    ],
+    charsPerSecond: 8,     // speed (try 6–8 for smooth feel)
+    separator: "   •   ",  // between phrases
+    pad: 16, 
+    windowLen: 40,         // title length (try 35–50)
+    targetFps: 30,              // trailing spaces for breathing room
+    fallback: "LawnSolutions",
+  });
   return (
     <>
       <Hero />
@@ -30,12 +43,30 @@ export default function Home() {
     </>
   );
 }
-
 function Hero() {
   return (
     <section id="home" className="relative">
-      <img src={heroImg} alt="Lush green lawn and garden" className="h-[70vh] w-full object-cover" />
-      <div className="absolute inset-0 bg-black/40"/>
+      {/* Background video */}
+      <video
+        className="h-[70vh] w-full object-cover"
+        autoPlay
+        muted
+        loop
+        playsInline
+        poster="/hero-poster.jpg"
+        preload="metadata"
+      >
+        {/* Prefer WebM, then MP4 */}
+        <source src="/hero.webm" type="video/webm" />
+        <source src="/hero.mp4" type="video/mp4" />
+        {/* Fallback text */}
+        Your browser does not support the video tag.
+      </video>
+
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-black/40" />
+
+      {/* Content */}
       <div className="absolute inset-0 flex items-center">
         <div className="max-w-7xl mx-auto px-4 text-white">
           <h1 className="text-4xl md:text-6xl font-extrabold leading-tight">
@@ -53,6 +84,7 @@ function Hero() {
     </section>
   );
 }
+
 
 function Badges() {
   return (
@@ -82,7 +114,7 @@ function Services() {
   ];
 
   return (
-    <section id="services" className="py-16 bg-gradient-to-b from-white to-[#05270a]/10 border-b">
+    <section id="services" className="py-16 bg-gradient-to-b from-white to-[#05270a]/10 border-b scroll-mt-24">
       <div className="max-w-7xl mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-bold">Services</h2>
         <p className="mt-2 text-gray-600 max-w-2xl">
@@ -123,7 +155,7 @@ function CTA() {
 
 function Gallery() {
   return (
-    <section id="gallery" className="py-16 border-t border-b bg-white">
+    <section id="gallery" className="py-16 border-t border-b bg-white scroll-mt-24">
       <div className="max-w-7xl mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-bold">Project Gallery</h2>
         <p className="mt-2 text-gray-600 max-w-2xl">From small touch-ups to full transformations. See a few of our recent projects.</p>
@@ -145,7 +177,7 @@ function Testimonials() {
   ];
 
   return (
-    <section id="testimonials" className="py-16 bg-[#05270a]/5">
+    <section id="testimonials" className="py-16 bg-[#05270a]/5 scroll-mt-24">
       <div className="max-w-7xl mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-bold">What clients say</h2>
         <div className="mt-8 grid gap-6 md:grid-cols-3">
@@ -223,7 +255,7 @@ function appendTimestamps(fd) {
   }
 
   return (
-    <section id="contact" className="py-16">
+    <section id="contact" className="py-16 scroll-mt-24">
       <div className="max-w-7xl mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-bold">Get your free quote</h2>
         <p className="mt-2 text-gray-600 max-w-2xl">

@@ -1,13 +1,81 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<!-- USE THIS FOR ALL THINGS SEO AND MANIPULATING THE GOOGLE SEARCHES -->
+<head>
+  <meta charset="UTF-8" />
+  <!-- <link rel="icon" type="image/svg+xml" href="/grass.svg" /> -->
+  <!-- Basic meta -->
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#05270a" />
+  <!-- Canonical to avoid duplicate indexing -->
+<link rel="canonical" href="https://www.your-domain.com/">
+
+<title>LawnSolutions — Landscaping • Design • Build • Care</title>
+<meta name="description" content="DFW landscaping & lawn care. Free quotes, licensed & insured. We design, build, and maintain outdoor spaces you’ll love." />
+
+<!-- Open Graph (social previews) -->
+<meta property="og:title" content="LawnSolutions — Landscaping • Design • Build • Care">
+<meta property="og:description" content="DFW landscaping & lawn care. Free quotes, licensed & insured.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.your-domain.com/">
+<meta property="og:image" content="https://www.your-domain.com/og-cover.jpg">
+
+<!-- Twitter Card -->
+<!-- <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="LawnSolutions — Landscaping • Design • Build • Care">
+<meta name="twitter:description" content="DFW landscaping & lawn care. Free quotes, licensed & insured.">
+<meta name="twitter:image" content="https://www.your-domain.com/og-cover.jpg"> -->
+
+
+  <!-- Icons / Favicons -->
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icon-circle-32.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="/icon-circle-48.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="/icon-circle-64.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/site.webmanifest">
+
+  <!-- Preload highest-priority images -->
+  <link rel="preload" as="image" href="/logo-original.webp" imagesrcset="/logo-original.webp"
+    imagesizes="(max-width:768px) 128px, 160px">
+  <link rel="preload" as="image" href="/hero-poster.jpg">
+
+  <!-- Optional: prefetch the Careers route chunk after idle (Vite will also do this via import()) -->
+  <link rel="modulepreload" href="/src/pages/Careers.jsx">
+  <title>Lawn Solutions</title>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "LandscapingService",
+  "name": "LawnSolutions",
+  "url": "https://www.your-domain.com/",
+  "logo": "https://www.your-domain.com/logo-original.png",
+  "image": "https://www.your-domain.com/og-cover.jpg",
+  "telephone": "+1-555-123-4567",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Dallas–Fort Worth",
+    "addressRegion": "TX",
+    "postalCode": "76010",
+    "addressCountry": "US"
+  },
+  "areaServed": "Dallas–Fort Worth Metroplex",
+  "priceRange": "$$",
+  "sameAs": [
+    "https://www.facebook.com/your-page",
+    "https://www.instagram.com/your-page"
+  ]
+}
+</script>
+
+  
+</body>
+
 </html>
