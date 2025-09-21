@@ -3,10 +3,9 @@ import react from "@vitejs/plugin-react-swc";
 import tailwindcss from "@tailwindcss/vite";
 import compression from "vite-plugin-compression";
 import { visualizer } from "rollup-plugin-visualizer";
-import { process } from "node:process";
 
 // Set ANALYZE=1 in your env to output dist/stats.html after build
-const analyze = process.env.ANALYZE === "1";
+// const analyze = process.env.ANALYZE === "1";
 
 export default defineConfig({
   plugins: [
