@@ -5,7 +5,7 @@ import compression from "vite-plugin-compression";
 import { visualizer } from "rollup-plugin-visualizer";
 
 // Set ANALYZE=1 in your env to output dist/stats.html after build
-// const analyze = process.env.ANALYZE === "1";
+const analyze = import.meta.env.ANALYZE === "1";
 
 export default defineConfig({
   plugins: [
