@@ -1,8 +1,6 @@
 // src/pages/Home.jsx
 import { useState, useRef } from "react";
-import { useTitleTickerUltra } from "../hooks/useTitleTicker";
 import { useFaviconMarquee } from "../hooks/useFaviconMarquee";
-import { use } from "react";
 
 const serviceImgs = [
   "https://images.unsplash.com/photo-1598970434795-0c54fe7c0642?q=80&w=1200&auto=format&fit=crop",
@@ -20,17 +18,7 @@ const galleryImgs = [
 
 export default function Home() {
   useFaviconMarquee({ bg: "#05270a", text: "LS", fps: 60 });
-  useTitleTickerUltra({
-    texts: [
-      "Lawn Solutions — Free Quote Today",
-    ],
-    charsPerSecond: 8,     // speed (try 6–8 for smooth feel)
-    separator: "   •   ",  // between phrases
-    pad: 16, 
-    windowLen: 40,         // title length (try 35–50)
-    targetFps: 30,              // trailing spaces for breathing room
-    fallback: "LawnSolutions",
-  });
+
   return (
     <>
       <Hero />
