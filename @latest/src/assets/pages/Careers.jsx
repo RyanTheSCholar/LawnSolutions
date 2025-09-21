@@ -151,6 +151,7 @@ export default function Careers() {
 /* ------------------------- Application Form ------------------------- */
 function ApplicationForm({ selectedRole }) {
   const [status, setStatus] = useState({ state: "idle", msg: "" });
+  const [showSuccess, setShowSuccess] = useState(false);
   const formRef = useRef(null);
   const fileRef = useRef(null);
   const [fileName, setFileName] = useState("");
@@ -162,7 +163,7 @@ function ApplicationForm({ selectedRole }) {
   useEffect(() => {
     // Show success banner when redirected back after submit
     if (location.hash === "#thanks") {
-      setStatus({ state: "success", msg: "Thanks for applying! We’ll be in touch." });
+      setShowSuccess(true);
       history.replaceState(null, "", location.pathname); // clean hash
     }
   }, []);
@@ -367,6 +368,7 @@ function ApplicationForm({ selectedRole }) {
           </button>
         </form>
       </div>
+      <SuccessModal open={showSuccess} onClose={() => setShowSuccess(false)} />
     </section>
   );
 }
@@ -624,3 +626,89 @@ function JobDetailsModal({ job, onClose }) {
     </div>
   );
 }
+
+function SuccessModal({ open, onClose }) {
+  const dialogRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialogRef.current?.focus();
+
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label="Application submitted">
+      {/* Backdrop */}
+      <button
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+        aria-label="Close"
+        title="Close"
+      />
+
+      {/* Panel */}
+      <div className="absolute inset-0 flex items-start md:items-center justify-center p-4 md:p-8">
+        <div
+          ref={dialogRef}
+          tabIndex={-1}
+          className="w-full max-w-md bg-white rounded-2xl shadow-2xl border p-6 outline-none"
+        >
+          <div className="flex items-start gap-3">
+            {/* Check icon */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-6 h-6 text-green-600 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <path d="m9 11 3 3L22 4" />
+            </svg>
+
+            <div>
+              <h3 className="text-lg md:text-xl font-bold">Thanks—application received!</h3>
+              <p className="mt-1 text-sm text-gray-600">
+                We’ll review your resume and reach out to you soon.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 flex items-stretch justify-end gap-3">
+            <a
+              href="#apply"
+              onClick={(e) => {
+                e.preventDefault();
+                onClose();
+                document.getElementById("apply")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="inline-flex h-11 items-center justify-center rounded-xl px-5 font-semibold bg-[#05270a] text-white hover:bg-[#05270a]/90"
+            >
+              Back to Careers
+            </a>
+            <button
+              onClick={onClose}
+              className="inline-flex h-11 items-center justify-center rounded-xl px-5 font-semibold border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
