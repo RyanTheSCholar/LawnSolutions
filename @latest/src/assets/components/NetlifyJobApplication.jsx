@@ -1,245 +1,249 @@
-/* eslint-disable react/prop-types */
-// src/components/NetlifyJobApplicationForm.jsx
-import { useEffect, useRef, useState } from "react";
+// src/components/JobApplicationForm.jsx
+import { useState, useRef } from "react";
 
-export default function NetlifyJobApplicationForm({
-  formName = "job-application",
-  // eslint-disable-next-line react/prop-types
-  successTarget = "/careers#thanks", // or "/#thanks" if you don't want SPA rewrites
-  selectedRole = "Landscape Crew Member",
-  maxBytesMB = 3,
-}) {
-  const [status, setStatus] = useState({ state: "idle", msg: "" });
-  const [fileName, setFileName] = useState("");
-  const [fileSize, setFileSize] = useState(0);
-  const [fileError, setFileError] = useState("");
-  const fileRef = useRef(null);
+const MAX_MB = 5;
+const ACCEPTED = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
 
-  const MAX_BYTES = maxBytesMB * 1024 * 1024;
+export default function JobApplicationForm() {
+  const [status, setStatus] = useState(null); // "loading" | "ok" | "error" | string
+  const [resumeFile, setResumeFile] = useState(null);
+  const [errors, setErrors] = useState({});
+  const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    if (location.hash === "#thanks") {
-      setStatus({ state: "success", msg: "Thanks for applying! We’ll be in touch." });
-      history.replaceState(null, "", location.pathname); // clear the hash
-    }
-  }, []);
+  const validateFile = (f) => {
+    if (!f) return {};
+    const tooBig = f.size > MAX_MB * 1024 * 1024;
+    const badType = !ACCEPTED.includes(f.type);
+    const errs = {};
+    if (tooBig) errs.resume = `File too large (max ${MAX_MB} MB).`;
+    if (badType) errs.resume = "Only PDF or Word files are allowed.";
+    return errs;
+  };
 
-  function formatBytes(n) {
-    const mb = n / (1024 * 1024);
-    return `${mb.toFixed(mb < 0.1 ? 2 : 1)} MB`;
-  }
-
-  function onFileChange(e) {
+  const onFileChange = (e) => {
     const f = e.target.files?.[0];
     if (!f) {
-      setFileName("");
-      setFileSize(0);
-      setFileError("");
+      setResumeFile(null);
+      setErrors((x) => ({ ...x, resume: undefined }));
       return;
     }
-    setFileName(f.name);
-    setFileSize(f.size);
+    const errs = validateFile(f);
+    if (Object.keys(errs).length) {
+      setErrors((x) => ({ ...x, ...errs }));
+      setResumeFile(null);
+      return;
+    }
+    setErrors((x) => ({ ...x, resume: undefined }));
+    setResumeFile(f);
+  };
 
-    if (f.type !== "application/pdf") setFileError("Please upload a PDF file.");
-    else if (f.size > MAX_BYTES)
-      setFileError(`File is too large (${formatBytes(f.size)}). Max ${formatBytes(MAX_BYTES)}.`);
-    else setFileError("");
-  }
+  const clearFile = () => {
+    setResumeFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setErrors((x) => ({ ...x, resume: undefined }));
+  };
 
-  function clearFile() {
-    const input = fileRef.current;
-    if (!input) return;
-    input.value = "";
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+
+    // Ensure file exists & valid
+    if (!resumeFile) {
+      setErrors((x) => ({ ...x, resume: "Please attach your résumé." }));
+      return;
+    }
+    const fileErrs = validateFile(resumeFile);
+    if (Object.keys(fileErrs).length) {
+      setErrors((x) => ({ ...x, ...fileErrs }));
+      return;
+    }
+    fd.set("resume", resumeFile);
+
+    setStatus("loading");
     try {
-      input.type = "text";
-      input.type = "file";
-    } catch {
-      const tmp = document.createElement("form");
-      const parent = input.parentNode;
-      const next = input.nextSibling;
-      tmp.appendChild(input);
-      tmp.reset();
-      parent?.insertBefore(input, next || null);
+      const res = await fetch("/.netlify/functions/submit-application", {
+        method: "POST",
+        body: fd,
+      });
+      if (!res.ok) throw new Error("Request failed");
+      setStatus("ok");
+      form.reset();
+      clearFile();
+      setErrors({});
+    } catch (err) {
+      setStatus("error");
     }
-    setFileName("");
-    setFileSize(0);
-    setFileError("");
-    setStatus({ state: "idle", msg: "" });
-  }
+  };
 
-  // Let the browser POST to Netlify; only block if invalid
-  function onSubmit(e) {
-    const f = fileRef.current?.files?.[0];
-    if (f && (f.type !== "application/pdf" || f.size > MAX_BYTES)) {
-      e.preventDefault();
-      setStatus({ state: "error", msg: "Please choose a valid PDF under " + maxBytesMB + "MB." });
-      return;
-    }
-    setStatus({ state: "loading", msg: "Submitting..." });
-  }
+  const baseInput =
+    "mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm " +
+    "placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 " +
+    "disabled:bg-slate-100 disabled:text-slate-500";
+  const labelCls = "block text-sm font-medium text-slate-700";
+  const help = "mt-1 text-xs text-slate-500";
+  const errText = "mt-1 text-xs text-red-600";
 
   return (
-    <form
-      onSubmit={onSubmit}
-      name={formName}
-      method="POST"
-      data-netlify="true"
-      encType="multipart/form-data"
-      action={successTarget}
-      netlify-honeypot="bot-field"
-      className="mt-8 grid gap-4 md:grid-cols-2"
-      noValidate
-    >
-      {/* Netlify requirements */}
-      <input type="hidden" name="form-name" value={formName} />
-      <input type="text" name="bot-field" className="hidden" tabIndex={-1} autoComplete="off" />
+    <section className="py-8">
+      <div className="mx-auto max-w-2xl">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <header className="mb-6">
+            <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Apply for a Position</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Fill out the form below and attach your résumé (PDF/Word).
+            </p>
+          </header>
 
-      {/* Optional top status (success via #thanks; errors inline) */}
-      {status.state === "error" && (
-        <div className="md:col-span-2 rounded-xl px-4 py-3 text-sm bg-red-50 text-red-700 border border-red-200">
-          {status.msg}
-        </div>
-      )}
-      {status.state === "loading" && (
-        <div className="md:col-span-2 rounded-xl px-4 py-3 text-sm bg-gray-50 text-gray-700 border">
-          {status.msg}
-        </div>
-      )}
-      {status.state === "success" && (
-        <div className="md:col-span-2 rounded-xl px-4 py-3 text-sm bg-green-50 text-green-700 border border-green-200">
-          {status.msg}
-        </div>
-      )}
+          {/* Alert messages */}
+          <div aria-live="polite" className="mb-4">
+            {status === "loading" && (
+              <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+                Submitting your application…
+              </div>
+            )}
+            {status === "ok" && (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                Thanks! Your application has been sent.
+              </div>
+            )}
+            {status === "error" && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+                Something went wrong sending your application. Please try again.
+              </div>
+            )}
+          </div>
 
-      {/* Fields */}
-      <div className="grid gap-2">
-        <label className="text-sm">Full Name</label>
-        <input
-          name="name"
-          required
-          className="border rounded-xl px-4 py-3"
-          placeholder="Jane Doe"
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <label className="text-sm">Email</label>
-        <input
-          name="email"
-          type="email"
-          required
-          className="border rounded-xl px-4 py-3"
-          placeholder="jane@example.com"
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <label className="text-sm">Phone</label>
-        <input
-          name="phone"
-          className="border rounded-xl px-4 py-3"
-          placeholder="(555) 123-4567"
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <label className="text-sm">Position</label>
-        <select
-          name="position"
-          defaultValue={selectedRole}
-          className="border rounded-xl px-4 py-3"
-        >
-          <option>Landscape Crew Member</option>
-          <option>Crew Lead / Foreman</option>
-          <option>Seasonal Helper</option>
-        </select>
-      </div>
-
-      {/* Resume upload */}
-      <div className="grid gap-2 md:col-span-2">
-        <label htmlFor="resume" className="text-sm">Resume (PDF)</label>
-
-        <input
-          ref={fileRef}
-          id="resume"
-          name="attachment"                // Netlify will store this file
-          type="file"
-          accept=".pdf,application/pdf"
-          className="sr-only"
-          onChange={onFileChange}
-        />
-
-        <div className="flex items-center gap-3 rounded-xl px-4 py-3 bg-white border">
-          {/* File icon */}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-5 h-5 text-[#05270a] shrink-0"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.75"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          <form
+            name="job-application"
+            method="POST"
+            encType="multipart/form-data"
+            data-netlify="true"
+            data-netlify-honeypot="bot-field"
+            onSubmit={onSubmit}
+            className="grid grid-cols-1 gap-5"
           >
-            <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
-            <path d="M14 3v6h6" />
-            <path d="M12 17v-6" />
-            <path d="M9.5 12.5 12 10l2.5 2.5" />
-          </svg>
+            {/* Netlify form name (important) */}
+            <input type="hidden" name="form-name" value="job-application" />
+            {/* Honeypot */}
+            <p className="hidden">
+              <label>
+                Don’t fill this out: <input name="bot-field" />
+              </label>
+            </p>
 
-          {/* Filename + size */}
-          <span className="text-sm text-gray-700 truncate flex-1">
-            {fileName ? `${fileName}${fileSize ? ` — ${formatBytes(fileSize)}` : ""}` : `Choose a PDF (max ${maxBytesMB}MB)`}
-          </span>
+            <div>
+              <label className={labelCls} htmlFor="name">
+                Full Name
+              </label>
+              <input id="name" name="name" required className={baseInput} placeholder="Jane Doe" />
+            </div>
 
-          {/* Browse */}
-          <label
-            htmlFor="resume"
-            className="inline-flex items-center px-3 py-1 rounded-lg bg-[#05270a] text-white text-xs cursor-pointer hover:bg-[#05270a]/90"
-          >
-            Browse
-          </label>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <div>
+                <label className={labelCls} htmlFor="email">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  name="email"
+                  required
+                  className={baseInput}
+                  placeholder="jane@example.com"
+                />
+              </div>
+              <div>
+                <label className={labelCls} htmlFor="phone">
+                  Phone
+                </label>
+                <input id="phone" name="phone" required className={baseInput} placeholder="(555) 555-5555" />
+              </div>
+            </div>
 
-          {/* Clear */}
-          <button
-            type="button"
-            onClick={clearFile}
-            disabled={!fileName}
-            aria-label="Remove selected file"
-            title="Clear file"
-            className="ml-1 inline-flex items-center justify-center w-7 h-7 rounded-md text-red-600 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-              className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2"
-              strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
+            <div>
+              <label className={labelCls} htmlFor="position">
+                Position
+              </label>
+              <input id="position" name="position" required className={baseInput} placeholder="Crew Lead" />
+            </div>
+
+            <div>
+              <label className={labelCls} htmlFor="coverLetter">
+                Cover Letter (optional)
+              </label>
+              <textarea
+                id="coverLetter"
+                name="coverLetter"
+                rows={5}
+                className={baseInput + " resize-y"}
+                placeholder="Briefly tell us why you’re a great fit…"
+              />
+              <p className={help}>You can also include any schedule or start-date notes here.</p>
+            </div>
+
+            <div>
+              <label className={labelCls} htmlFor="resume">
+                Résumé <span className="font-normal text-slate-500">(PDF/Doc, ≤ {MAX_MB} MB)</span>
+              </label>
+
+              <div className="mt-1 flex items-center gap-2">
+                <input
+                  ref={fileInputRef}
+                  id="resume"
+                  type="file"
+                  name="resume"
+                  accept=".pdf,.doc,.docx"
+                  onChange={onFileChange}
+                  className={
+                    baseInput +
+                    " file:mr-4 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-700"
+                  }
+                  required
+                />
+                {resumeFile && (
+                  <button
+                    type="button"
+                    onClick={clearFile}
+                    className="rounded-full p-1 text-xl leading-none"
+                    style={{ color: "red", background: "transparent", border: "none", cursor: "pointer" }}
+                    title="Remove file"
+                    aria-label="Remove file"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+
+              {resumeFile && (
+                <p className={help}>
+                  Selected: <span className="font-medium">{resumeFile.name}</span> —{" "}
+                  {(resumeFile.size / (1024 * 1024)).toFixed(2)} MB
+                </p>
+              )}
+              {errors.resume && <p className={errText}>{errors.resume}</p>}
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={status === "loading"}
+                className="inline-flex items-center justify-center rounded-2xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {status === "loading" ? "Submitting…" : "Submit Application"}
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500">
+              Protected by a honeypot. If spam increases, add hCaptcha/Turnstile.
+            </p>
+          </form>
         </div>
-
-        {/* Inline error */}
-        {fileError && <p className="text-xs text-red-600">{fileError}</p>}
-        {!fileError && fileName && (
-          <p className="text-xs text-gray-500">Looks good. PDF under {formatBytes(MAX_BYTES)}.</p>
-        )}
       </div>
-
-      <div className="grid gap-2 md:col-span-2">
-        <label className="text-sm">Tell us about your experience</label>
-        <textarea
-          name="experience"
-          className="border rounded-xl px-4 py-3 min-h-32"
-          placeholder="Brief summary of relevant work..."
-        />
-      </div>
-
-      <button
-        type="submit"
-        disabled={status.state === "loading" || !!fileError}
-        className="md:col-span-2 px-6 py-3 rounded-xl bg-[#05270a] text-white font-semibold hover:bg-[#05270a]/90 disabled:opacity-60 disabled:cursor-not-allowed"
-      >
-        {status.state === "loading" ? "Submitting..." : "Submit Application"}
-      </button>
-    </form>
+    </section>
   );
 }
